@@ -1,9 +1,15 @@
 {
   "name": "pi-deepseek-search",
   "version": "0.1.0",
-  "description": "DeepSeek web search and Markdown fetch tools for Pi",
+  "description": "DeepSeek-powered web search and Markdown page fetching for the Pi coding agent. No browser or MCP required.",
   "type": "module",
-  "keywords": ["pi-package", "deepseek", "search"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dingdinglz/pi-deepseek-search.git"
+  },
+  "homepage": "https://github.com/dingdinglz/pi-deepseek-search#readme",
+  "bugs": { "url": "https://github.com/dingdinglz/pi-deepseek-search/issues" },
+  "keywords": ["pi-package", "pi-extension", "pi-coding-agent", "deepseek", "deepseek-api", "web-search", "web-fetch", "markdown", "typescript"],
   "files": ["index.ts", "src", "README.md"],
   "pi": { "extensions": ["./index.ts"] },
   "scripts": {
