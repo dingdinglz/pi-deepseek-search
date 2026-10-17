@@ -53,7 +53,7 @@ test("invalid input never sends a request", async () => {
 
 test("missing key gives setup instructions without networking", async () => {
   const api = client(async () => { throw new Error("should not request"); }, { apiKey: () => "  " });
-  await assert.rejects(api.search({ query: "test" }), /Set DEEPSEEK_API_KEY/);
+  await assert.rejects(api.search({ query: "test" }), /Run \/deepseek-key/);
 });
 
 for (const status of [400, 401, 402, 403, 404, 413]) {
@@ -107,7 +107,10 @@ const pendingFetch: typeof fetch = async (_url, init) => new Promise((_resolve, 
 
 test("caller cancellation aborts HTTP and retry waits", async () => {
   const controller = new AbortController();
-  const promise = client(pendingFetch).search({ query: "x" }, controller.signal);
+  let started!: () => void;
+  const ready = new Promise<void>(resolve => { started = resolve; });
+  const promise = client(async (url, init) => { started(); return pendingFetch(url, init); }).search({ query: "x" }, controller.signal);
+  await ready;
   controller.abort();
   await assert.rejects(promise, /cancelled/);
 

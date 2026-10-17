@@ -6,9 +6,10 @@ import { fileURLToPath } from "node:url";
 import { discoverAndLoadExtensions, type ExtensionToolContext } from "@earendil-works/pi-coding-agent";
 import { Value } from "typebox/value";
 import type { FetchData, SearchData } from "../src/schemas.ts";
+import { KeyStore } from "../src/credentials.ts";
 
 // Explicit opt-in only: these requests use the real, billable API.
-if (!process.env.DEEPSEEK_API_KEY?.trim()) throw new Error("Set DEEPSEEK_API_KEY to run live tests.");
+if (!await new KeyStore().read()) throw new Error("First run /deepseek-key in Pi's TUI, then run this script.");
 const root = fileURLToPath(new URL("../", import.meta.url));
 const empty = await mkdtemp(join(tmpdir(), "pi-deepseek-smoke-"));
 try {

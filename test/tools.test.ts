@@ -29,6 +29,7 @@ test("Pi's actual loader discovers exactly two tools from the package manifest",
     assert.deepEqual(loaded.warnings ?? [], []);
     assert.equal(loaded.extensions.length, 1);
     assert.deepEqual([...loaded.extensions[0].tools.keys()], ["deepseek_search", "deepseek_fetch"]);
+    assert.deepEqual([...loaded.extensions[0].commands.keys()], ["deepseek-key"]);
   } finally { await rm(empty, { recursive: true, force: true }); }
 });
 

@@ -7,7 +7,7 @@ const BASE_URL = "https://api.deepseek.com/v1/tools";
 const MAX_ATTEMPTS = 3;
 
 export interface ClientOptions {
-  apiKey?: () => string | undefined;
+  apiKey?: () => string | undefined | Promise<string | undefined>;
   fetch?: typeof globalThis.fetch;
   timeoutMs?: number;
   // Injectable to keep retry tests fast; production honors Retry-After.
@@ -38,8 +38,9 @@ export class DeepSeekClient {
 
   private async request<S extends TSchema>(endpoint: string, body: unknown, schema: S, callerSignal?: AbortSignal): Promise<Static<S>> {
     callerSignal?.throwIfAborted();
-    const key = (this.options.apiKey ?? (() => process.env.DEEPSEEK_API_KEY))()?.trim();
-    if (!key) throw new Error("Set DEEPSEEK_API_KEY in the environment before starting Pi.");
+    const key = (await this.options.apiKey?.())?.trim();
+    callerSignal?.throwIfAborted();
+    if (!key) throw new Error("Run /deepseek-key in Pi's TUI to set your DeepSeek API key.");
 
     const timeoutMs = this.options.timeoutMs ?? 60_000;
     const deadline = Date.now() + timeoutMs;
@@ -97,7 +98,7 @@ export class DeepSeekClient {
   private errorMessage(status: number, data: unknown, key: string): string {
     const hints: Record<number, string> = {
       400: "Check the request parameters.",
-      401: "Check DEEPSEEK_API_KEY.",
+      401: "Run /deepseek-key to update your API key.",
       402: "DeepSeek account balance is insufficient; top up before retrying.",
       403: "Fetch was rejected by the safety policy.",
       404: "No usable page content; check the URL or try another source.",

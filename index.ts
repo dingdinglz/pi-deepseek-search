@@ -1,6 +1,8 @@
 import { defineTool, type ExtensionAPI, type ToolRenderers } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { DeepSeekClient } from "./src/client.ts";
+import { KeyStore } from "./src/credentials.ts";
+import { registerKeyCommand } from "./src/key-command.ts";
 import { safeText, searchText, toolResult, type ResultDetails } from "./src/output.ts";
 import { FetchParams, FetchResponse, SearchParams, SearchResponse } from "./src/schemas.ts";
 
@@ -69,7 +71,9 @@ export function createTools(client = new DeepSeekClient()) {
 }
 
 export default function (pi: ExtensionAPI) {
-  const tools = createTools();
+  const store = new KeyStore();
+  registerKeyCommand(pi, store);
+  const tools = createTools(new DeepSeekClient({ apiKey: () => store.read() }));
   pi.registerTool(tools.search);
   pi.registerTool(tools.fetch);
 }

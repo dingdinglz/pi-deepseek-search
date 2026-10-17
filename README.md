@@ -7,8 +7,6 @@
 需要 Node.js 22+、当前 `@earendil-works` 版 Pi（已在 1.3.0 验证）和有余额的 DeepSeek API key。
 
 ```bash
-export DEEPSEEK_API_KEY="你的 DeepSeek API key"
-
 # 在本项目目录临时加载
 pi -e ./index.ts
 
@@ -16,9 +14,21 @@ pi -e ./index.ts
 pi install /绝对路径/pi-deepseek-search
 ```
 
-在 Pi 中直接说“搜索 DeepSeek Search API 的使用方式”或“读取这个网页：https://…”。已运行的 Pi 需要重新启动以继承新设置的环境变量。
+首次使用，在 Pi 的 TUI 中运行：
 
-key 只从 `DEEPSEEK_API_KEY` 读取，不写入源码、配置、工具参数或测试报告。不会自动加载 `.env`。查询、原始问题、本地化 IP（如提供）和目标 URL 会发送给 DeepSeek；不要传入敏感信息。
+```text
+/deepseek-key
+```
+
+在弹出的遮罩输入框中粘贴 key，按 Enter 保存，Esc 取消。保存后立即生效，无需重新加载；重启 Pi 后仍可使用。再次运行该命令可以替换 key，`/deepseek-key clear` 确认后删除已保存的 key。不要把 key 写在命令后面，命令不接受 key 参数。保存时只检查格式，不会发起计费请求；是否有效由后续 API 调用确认。
+
+之后直接说“搜索 DeepSeek Search API 的使用方式”或“读取这个网页：https://…”。
+
+key 保存于 Pi 用户目录下的 `deepseek-search/key.json`（默认 `~/.pi/agent/deepseek-search/key.json`），**本地明文存储**，目录权限 `0700`、文件权限 `0600`。输入内容不会回显或主动写入对话、命令历史、项目文件；有本机文件读取权限的程序仍然能够读取该文件。自定义 Pi 用户目录时，key 会随该目录隔离。
+
+插件不再读取 `DEEPSEEK_API_KEY` 或 `.env`，也不修改 Pi 的模型供应商凭据。无 key 时工具会提示运行 `/deepseek-key`。命令仅在 TUI 可用，RPC/print/JSON 模式的工具可以使用事先保存的 key。
+
+查询、原始问题、本地化 IP（如提供）和目标 URL 会发送给 DeepSeek；不要传入敏感信息。
 
 ## 工具
 
@@ -66,21 +76,24 @@ npm ci
 npm run check
 npm test
 
+# 先在 Pi TUI 用 /deepseek-key 保存 key
 # 显式发起三次真实请求，可能计费；不会由 npm test 自动触发
-DEEPSEEK_API_KEY="你的 key" npm run test:live
+npm run test:live
 ```
 
-自动测试覆盖参数、Unicode、请求格式、错误脱敏、有限重试、取消、超时、结果截断、结构化输出、渲染及 Pi 的实际扩展加载器。
+自动测试覆盖参数、Unicode、请求格式、错误脱敏、有限重试、取消、超时、结果截断、结构化输出、渲染、Pi 实际扩展加载器，以及 key 的持久化、权限、替换、删除、取消、遮罩输入和环境变量禁用。
 
-实测结果（使用临时 key，未保存 key）：
+真实 Pi TUI 已通过伪终端验证：运行 `/deepseek-key`、粘贴输入、保存成功，终端输出中没有 key 明文，文件权限为 `0600`。
+
+API 实测结果（通过真实 TUI 的 `/deepseek-key` 在隔离的 Pi 用户目录保存临时 key，再由独立进程读取并调用；测试后已删除临时目录）：
 
 | 场景 | 结果 |
 | --- | --- |
-| Pi 1.3.0 实际加载器 | 成功注册两个工具，无加载错误或警告 |
-| 搜索，`count=3` | 3 条结果，正文为空，约 432 ms |
-| 搜索，`need_content=true` | 1 条结果，正文 2987 字节，约 352 ms |
-| 抓取本项目引用的官方指南 | 标题“网页搜索与抓取”，Markdown 9352 字节，约 119 ms |
-| 类型检查 / 自动测试 | 通过 / 29 项通过 |
+| Pi 1.3.0 实际加载器 | 成功注册两个工具及 `/deepseek-key`，无加载错误或警告 |
+| 搜索，`count=3` | 3 条结果，正文为空，约 1576 ms |
+| 搜索，`need_content=true` | 1 条结果，正文 17464 字节，约 465 ms |
+| 抓取本项目引用的官方指南 | 标题“网页搜索与抓取”，Markdown 9352 字节，约 484 ms |
+| 类型检查 / 自动测试 | 通过 / 36 项通过 |
 
 延迟和搜索结果随网络及索引变化。实时验证脚本通过 Pi 加载扩展后直接调用注册的工具，不额外发起模型对话。
 
@@ -88,6 +101,8 @@ DEEPSEEK_API_KEY="你的 key" npm run test:live
 
 - `index.ts`：工具注册与简洁终端展示。
 - `src/client.ts`：鉴权、参数校验、HTTP、取消与错误处理。
+- `src/key-command.ts`：`/deepseek-key` 命令及遮罩输入。
+- `src/credentials.ts`：key 的私有文件存储与原子替换。
 - `src/schemas.ts`：输入和结构化输出定义。
 - `src/output.ts`：结果排版与长内容落盘。
 
