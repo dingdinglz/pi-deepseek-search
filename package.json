@@ -1,0 +1,28 @@
+{
+  "name": "pi-deepseek-search",
+  "version": "0.1.0",
+  "description": "DeepSeek web search and Markdown fetch tools for Pi",
+  "type": "module",
+  "keywords": ["pi-package", "deepseek", "search"],
+  "files": ["index.ts", "src", "README.md"],
+  "pi": { "extensions": ["./index.ts"] },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "test:live": "tsx scripts/smoke.ts"
+  },
+  "engines": { "node": ">=22" },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^1.3.0",
+    "@earendil-works/pi-tui": "^1.3.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.20.0",
+    "typebox": "^1.4.2",
+    "typescript": "^5.9.0"
+  }
+}
