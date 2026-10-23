@@ -1,10 +1,16 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { DEFAULT_SETTINGS, ProviderSettingsStore, type ProviderSettings } from "./provider-settings.ts";
 
 /** Selection is independent of the main conversation model; no cross-provider fallback. */
 export function registerProviderCommand(pi: ExtensionAPI, store = new ProviderSettingsStore(), onChange: () => void = () => {}) {
   let settings: ProviderSettings = { ...DEFAULT_SETTINGS };
   let loadError: string | undefined;
+  function updateStatus(ctx: ExtensionContext) {
+    if (ctx.mode !== "tui") return;
+    ctx.ui.setStatus("web-provider", loadError
+      ? "Web Search: unavailable"
+      : `Web Search: ${settings.provider === "openai" ? "OpenAI Codex" : "DeepSeek"}`);
+  }
   pi.on("session_start", async (_event, ctx) => {
     try {
       settings = await store.read();
@@ -13,6 +19,8 @@ export function registerProviderCommand(pi: ExtensionAPI, store = new ProviderSe
     } catch (error) {
       loadError = error instanceof Error ? error.message : "Cannot load web provider settings.";
       ctx.ui.notify(loadError, "error");
+    } finally {
+      updateStatus(ctx);
     }
   });
   pi.registerCommand("web-provider", {
@@ -47,6 +55,8 @@ export function registerProviderCommand(pi: ExtensionAPI, store = new ProviderSe
           : "Web tools: DeepSeek. Uses the key saved by /deepseek-key.", "info");
       } catch (error) {
         ctx.ui.notify(error instanceof Error ? error.message : "Cannot save web provider settings.", "error");
+      } finally {
+        updateStatus(ctx);
       }
     },
   });
