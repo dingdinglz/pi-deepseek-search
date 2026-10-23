@@ -34,7 +34,7 @@ export async function toolResult<T extends object>(text: string, data: T, summar
   const details: ResultDetails = { summary };
   let visible = truncated.content;
   if (truncated.truncated) {
-    const directory = await mkdtemp(join(tmpdir(), "pi-deepseek-"));
+    const directory = await mkdtemp(join(tmpdir(), "pi-web-"));
     details.fullOutputPath = join(directory, "output.md");
     await writeFile(details.fullOutputPath, text, { encoding: "utf8", mode: 0o600 });
     visible += `\n\n[Output truncated to 400 lines / 30 KiB. Full output: ${details.fullOutputPath}. Use read with offset/limit to continue.]`;

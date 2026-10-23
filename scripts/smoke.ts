@@ -21,9 +21,9 @@ try {
   console.log("PASS Pi loader: " + [...registered.keys()].join(", "));
 
   const cases = [
-    { name: "deepseek_search", input: { query: "DeepSeek API search fetch site:api-docs.deepseek.com", count: 3 } },
-    { name: "deepseek_search", input: { query: "DeepSeek API", count: 1, need_content: true } },
-    { name: "deepseek_fetch", input: { url: "https://api-docs.deepseek.com/zh-cn/guides/search" } },
+    { name: "search", input: { query: "DeepSeek API search fetch site:api-docs.deepseek.com", count: 3 } },
+    { name: "search", input: { query: "DeepSeek API", count: 1, need_content: true } },
+    { name: "fetch", input: { url: "https://api-docs.deepseek.com/zh-cn/guides/search" } },
   ];
   for (const { name, input } of cases) {
     const tool = registered.get(name)!.definition;
@@ -31,7 +31,7 @@ try {
     const start = performance.now();
     const result = await tool.execute("smoke", input, undefined, undefined, {} as ExtensionToolContext);
     assert.ok(Value.Check(tool.outputSchema!, result.structuredContent));
-    if (name === "deepseek_search") {
+    if (name === "search") {
       const data = result.structuredContent as SearchData;
       assert.ok(data.results.length > 0, "Live search should return at least one source");
       assert.ok(data.results.length <= input.count!);

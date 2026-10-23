@@ -21,15 +21,15 @@ function tools(data: object) {
   return createTools(new DeepSeekClient({ apiKey: () => "test", fetch: async () => new Response(JSON.stringify(data)) }));
 }
 
-test("Pi's actual loader discovers exactly two tools from the package manifest", async () => {
+test("Pi's actual loader registers only search and fetch from the package manifest", async () => {
   const empty = await mkdtemp(join(tmpdir(), "pi-deepseek-loader-"));
   try {
     const loaded = await discoverAndLoadExtensions([resolve(".")], empty, empty);
     assert.deepEqual(loaded.errors, []);
     assert.deepEqual(loaded.warnings ?? [], []);
     assert.equal(loaded.extensions.length, 1);
-    assert.deepEqual([...loaded.extensions[0].tools.keys()], ["deepseek_search", "deepseek_fetch"]);
-    assert.deepEqual([...loaded.extensions[0].commands.keys()], ["deepseek-key"]);
+    assert.deepEqual([...loaded.extensions[0].tools.keys()], ["search", "fetch"]);
+    assert.deepEqual([...loaded.extensions[0].commands.keys()], ["deepseek-key", "web-provider"]);
   } finally { await rm(empty, { recursive: true, force: true }); }
 });
 
@@ -62,6 +62,7 @@ test("large text is bounded, saved losslessly, with complete structured output",
     const file = result.details.fullOutputPath!;
     try {
       assert.ok(file);
+      assert.match(file, /pi-web-[^/]+\/output\.md$/);
       assert.equal(await readFile(file, "utf8"), text);
       assert.ok(Buffer.byteLength(result.content[0].text) < 32 * 1024);
       assert.ok(!result.content[0].text.includes("\uFFFD"));
@@ -74,7 +75,7 @@ test("large text is bounded, saved losslessly, with complete structured output",
 test("rendering supports partial args, errors, expansion and old results", async () => {
   const tool = tools({ results: [item] }).search;
   const call = tool.renderCall!({} as never, theme, renderContext);
-  assert.match(call.render(80).join("\n"), /DeepSeek Search/);
+  assert.match(call.render(80).join("\n"), /Search/);
   const error = { content: [{ type: "text" as const, text: "HTTP 401: bad key" }], details: undefined };
   for (const isError of [true, false]) {
     assert.match(tool.renderResult!(error, { expanded: false, isPartial: false }, theme, { ...renderContext, isError }).render(80).join("\n"), /HTTP 401/);
